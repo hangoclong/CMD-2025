@@ -57,6 +57,7 @@
     const [value, setValue] = useState(initialValue);
     ```
     - `value`: current state
+        // - `value`: current state
     - `setValue`: function to update state
 
 **Explanation:**  
@@ -73,6 +74,7 @@
     }
 
     <button onClick={handleClick}>Click Me</button>
+    // <button onClick={handleClick}>Click Me</button>
     ```
 
 **Explanation:**  
@@ -115,9 +117,11 @@ function App() {
       completed: false,
     };
     setTodos([...todos, newTodo]);
+    // setTodos([...todos, newTodo]);
     setNewTodoText('');
   }
 
+  // Step 7: Toggle Complete
   // Step 7: Toggle Complete
   function handleToggleTodo(id: number) {
     setTodos(todos =>
@@ -135,12 +139,14 @@ function App() {
           type="text"
           value={newTodoText}
           onChange={e => setNewTodoText(e.target.value)}
+          // onChange={e => setNewTodoText(e.target.value)}
           placeholder="Add a new todo"
         />
         <button onClick={handleAddTodo}>Add</button>
         <ul>
           {todos.map(todo => (
             <TodoListItem
+            // <TodoListItem
               key={todo.id}
               item={todo}
               onToggle={handleToggleTodo}
@@ -177,6 +183,7 @@ interface TodoListItemProps {
 const TodoListItem: React.FC<TodoListItemProps> = ({ item, onToggle }) => {
   return (
     <li
+    // <li
       style={{
         textDecoration: item.completed ? 'line-through' : 'none',
         cursor: 'pointer'
