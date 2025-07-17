@@ -6,6 +6,8 @@
 *   Use advanced Flexbox layouts to create more complex UI structures.
 *   Refactor UI into reusable components for better code organization.
 
+![alt text](image.png){width=30%}
+
 ---
 
 ## Starting Point: Our Completed App

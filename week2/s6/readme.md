@@ -1,308 +1,271 @@
-# Week 2, Session 6: State, Logic, and Dynamic Lists
+# Week 2, Session 6: Understanding State, Logic, and Dynamic Lists
 
-**Objective:** To transform our static "IdeaStorm" UI into a fully interactive application by managing state, handling user input, and rendering a dynamic list of items performantly.
+**Objective:** To understand how our "IdeaStorm" app uses React state, handles user input, and renders dynamic lists to create a fully interactive experience.
 
 ---
 
 ## Session Outline
 
-1.  **Recap & Goal:** Briefly review our refactored UI from Session 5 and set the goal for today: bringing the app to life.
-2.  **Core Concepts:**
-    *   **Component Memory:** What is "state" and why do we need it?
-    *   **The `useState` Hook:** The tool for managing state in functional components.
-    *   **Dynamic Lists:** The performance pitfall of using `.map()` on mobile and the correct solution: `<FlatList>`.
-3.  **Live Coding - Making it Work:**
-    *   **Step 1: Adding State:** Introduce `useState` to manage our form inputs and the list of ideas.
-    *   **Step 2: Implementing `FlatList`:** Replace our hard-coded list with a dynamic, performant `FlatList`.
-    *   **Step 3: Adding Ideas:** Write the logic to add a new idea from the input fields to our list.
-    *   **Step 4: Deleting Ideas:** Implement the logic to remove an idea when the user presses the delete button.
-4.  **Final Code & Wrap-up:** Review the final, fully interactive code and summarize the key takeaways.
+1.  **Goal & Overview:** Our goal is to understand the key React concepts that make our `IdeaStorm` app interactive. We will analyze the existing `App.tsx` file.
+2.  **Core Concepts Analysis:**
+    *   **Component Memory:** How `useState` gives our component a memory.
+    *   **Controlled Inputs:** How state is linked to `TextInput` fields.
+    *   **Event Handlers:** How functions like `addIdea` and `deleteIdea` modify the state.
+    *   **Immutable Updates:** The *correct* way to change state in React.
+    *   **Dynamic & Performant Lists:** How `<FlatList>` efficiently renders our list of ideas.
+    *   **Child-to-Parent Communication:** How `IdeaCard` can tell `App` to delete an item.
+3.  **Code Deconstruction:** We will go through `App.tsx` section by section to see these concepts in action.
+4.  **Final Code Review & Recap:** Confirm our understanding and summarize the key takeaways.
 
 ---
 
-## Live Coding - Bringing "IdeaStorm" to Life
+## Deconstructing the `IdeaStorm` App
 
-Our app looks great after the UI refactoring in Session 5. We have a clean component structure and modern components like `<Pressable>`. However, it's still just a pretty picture. It doesn't remember what we type, and the button doesn't do anything. Today, we'll add the "brain" to our app using React's state management.
+Our app is already fully functional. It can add, display, and delete ideas. In this session, we're going to act like detectives and analyze the existing code in `App.tsx` to understand *how* it works. 
 
-### Step 1: Adding State with `useState`
+### 1. The Component's Memory: `useState`
 
-First, we need to give our `App` component some memory. We need to remember:
-
-**What is State? An Analogy**
-
-Think of a component's `state` as its short-term memory. It's any data that can change over time and should cause the UI to re-render. React gives us a special tool called the `useState` hook to manage this memory.
-
-Imagine `useState` gives you a box:
-1.  The value currently inside the box (e.g., `newTitle`).
-2.  A special function to replace what's in the box (e.g., `setNewTitle`).
-
-When you use the special function to change the value, React knows it needs to update the screen to show the new value. This is the core of interactivity in React.
-1.  The text the user is currently typing in the "title" input.
-2.  The text for the "description" input.
-3.  The list of all the ideas that have been added.
-
-Let's add the `useState` hook to `App.tsx` to manage this data.
-
-**In `App.tsx`:**
+At the top of the `App` component, you'll find these three lines:
 
 ```tsx
-import React, { useState } from 'react'; // 1. Import useState
-import {
-  StyleSheet,
-  View,
-  FlatList, // We will use this soon
-  SafeAreaView,
-  TextInput,
-  Pressable,
-  Text,
-} from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import Header from './components/Header';
-import IdeaCard from './components/IdeaCard';
-
-// Define the structure of a single idea
-export interface Idea {
-  id: string;
-  title: string;
-  description: string;
-}
-
-export default function App() {
-  // --- STATE --- //
-  // State for the title input field
-  const [newTitle, setNewTitle] = useState('');
-  // State for the description input field
-  const [newDescription, setNewDescription] = useState('');
-  // State for the list of all ideas, typed to our Idea interface
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-
-  // ... rest of the component
+const [ideas, setIdeas] = useState<Idea[]>([]);
+const [newTitle, setNewTitle] = useState('');
+const [newDescription, setNewDescription] = useState('');
 ```
 
-We've also created an `Idea` interface. This is a TypeScript best practice that ensures every idea object in our state array has a consistent shape (`id`, `title`, `description`).
+This is the component's **state**. Think of it as short-term memory.
 
-### Step 2: Implementing `<FlatList>`
+*   `ideas`: An array that holds all of our idea objects. It starts empty (`[]`). When we add or delete ideas, this is the variable we'll change.
+*   `newTitle`: A string that holds the text currently in the "title" input field.
+*   `newDescription`: A string that holds the text currently in the "description" input field.
 
-Hard-coding list items is inflexible. We need a list that automatically updates when our `ideas` state changes. On mobile, we can't just use `.map()` like on the web because it renders every single item at once, which is terrible for performance with long lists.
+For each piece of state, `useState` gives us two things: the value itself (e.g., `ideas`) and a special function to update it (e.g., `setIdeas`). **You must always use the setter function to make changes**, as this is how React knows it needs to re-render the UI.
 
-The solution is **virtualization**, and React Native gives us the perfect tool for it: `<FlatList>`.
+### 2. Linking State to Inputs: Controlled Components
 
-Let's replace our temporary `<IdeaCard>` with a `<FlatList>` that is connected to our `ideas` state.
-
-**In `App.tsx`, update the JSX:**
+How does the `newTitle` state know what's being typed into the `TextInput`? Through two special props:
 
 ```tsx
-// ... inside the return statement of App.tsx
-<SafeAreaView style={styles.container}>
-  <Header />
-  {/* ... inputContainer View ... */}
-
-  <View style={styles.listContainer}>
-    <FlatList
-      data={ideas} // 1. The data source
-      renderItem={({ item }) => ( // 2. How to render each item
-        <IdeaCard
-          id={item.id}
-          title={item.title}
-          description={item.description}
-          onDelete={() => {}} // We'll wire this up next
-        />
-      )}
-      keyExtractor={(item) => item.id} // 3. A unique key for each item
-      ListEmptyComponent={<View style={styles.emptyComponent}><Text style={styles.emptyText}>No ideas yet. Add one!</Text></View>}
-    />
-  </View>
-</SafeAreaView>
-// ...
+<TextInput
+  style={styles.input}
+  placeholder="Enter idea title"
+  value={newTitle} // The input's value is ALWAYS what's in the `newTitle` state
+  onChangeText={setNewTitle} // When the user types, call `setNewTitle` to update the state
+/>
 ```
 
-**Key `<FlatList>` Props:**
-*   `data`: The array of data to render. We pass it our `ideas` state.
-*   `renderItem`: A function that receives an object containing the `item` and returns the component to render for it. We render our `IdeaCard` here.
-*   `keyExtractor`: A function that returns a unique string key for each item. React uses this for performance optimizations. The `id` is perfect for this.
-*   `ListEmptyComponent`: (Optional but nice!) JSX to show when the `data` array is empty.
+This creates a **controlled component**. The React state is the single source of truth for the input's value. The flow is a loop:
+1.  User types a character.
+2.  `onChangeText` is called, which calls `setNewTitle`.
+3.  The `newTitle` state is updated.
+4.  React re-renders the component, and the `TextInput`'s `value` is updated to the new state.
 
-### Step 3: Adding New Ideas
+### 3. Handling Events: `addIdea` and `deleteIdea`
 
-Now, let's write the function that takes the text from our inputs, creates a new idea object, and adds it to our `ideas` array. We'll also clear the inputs after the idea is added.
+Our logic lives inside handler functions.
 
-**In `App.tsx`, add the `addIdea` handler:**
+**Adding an Idea:**
 
 ```tsx
-// ... inside the App component, after the state declarations
-
 const addIdea = () => {
-  // Don't add an idea if the title is empty
-  if (!newTitle.trim()) return;
-
+  if (newTitle.trim() === '') return; // Basic validation
   const newIdea: Idea = {
-    id: Date.now().toString(), // NOTE: Not a truly unique ID, but fine for our example.
+    id: Date.now().toString(),
     title: newTitle,
     description: newDescription,
+    date: new Date().toLocaleDateString(),
   };
-
-  // Use the function form of setState for safe updates
-  setIdeas((currentIdeas) => [...currentIdeas, newIdea]);
-
-  // Clear the input fields
+  setIdeas([newIdea, ...ideas]); // Key step!
   setNewTitle('');
   setNewDescription('');
 };
-
-// ...
 ```
 
-**The Golden Rule of State: Treat it as Immutable!**
+The most important line is `setIdeas([newIdea, ...ideas]);`. This is an **immutable update**. We are **not** modifying the original `ideas` array. Instead, we create a **brand new array** that contains the `newIdea` at the beginning, followed by all the items from the old array (`...ideas` is the spread operator).
 
-This line is critical: `setIdeas((currentIdeas) => [...currentIdeas, newIdea]);`.
+> **Why Immutable?** React checks for changes using a simple comparison (`===`). If you modify the original array, its reference in memory doesn't change, so React won't detect an update. By creating a *new* array, we guarantee React sees the change and re-renders the list.
 
-We are creating a **brand new** array. We use the spread syntax (`...currentIdeas`) to copy all the old items, and then we add the `newIdea` at the end. 
+**Deleting an Idea:**
 
-**Why?** React's performance is built on a simple check: has the state *variable itself* changed? If you just `push` to the existing array, the array variable in memory is still the same, so React won't see a change and won't re-render the UI. By creating a *new* array, we force React to see the change and update the screen.
-
-Now, let's wire up our inputs and button.
-
-**In `App.tsx`, update the input and button JSX:**
+The `deleteIdea` function also uses an immutable pattern. The `.filter()` method doesn't change the original array; it returns a *new* array containing only the elements that pass the test.
 
 ```tsx
-// ... inside the inputContainer View
-<View style={styles.row}>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter idea title"
-    value={newTitle} // Bind value to state
-    onChangeText={setNewTitle} // Update state on change
-  />
-  <Pressable style={styles.addButton} onPress={addIdea}> // Call addIdea on press
-    <FontAwesome name="plus" size={20} color="#fff" />
-  </Pressable>
-</View>
-<TextInput
-  style={[styles.input, styles.descriptionInput]}
-  placeholder="Enter idea description"
-  value={newDescription} // Bind value to state
-  onChangeText={setNewDescription} // Update state on change
-  multiline
-/>
-```
-
-### Step 4: Deleting Ideas
-
-To delete an idea, the `IdeaCard` (the child) needs to tell the `App` component (the parent) to remove an item from its state. We do this by passing a function down as a prop.
-
-This pattern is very common in React and is sometimes called **"prop drilling"**—where a parent component "drills" a function or data down through its children.
-
-**In `App.tsx`, create the `deleteIdea` handler:**
-
-```tsx
-// ... inside the App component, after addIdea
-
 const deleteIdea = (id: string) => {
-  setIdeas((currentIdeas) => {
-    // The .filter() method creates a new array containing only
-    // the items that do NOT match the ID we want to delete.
-    return currentIdeas.filter((idea) => idea.id !== id);
-  });
+  Alert.alert(/* ... */);
+  // Inside the Alert's onPress:
+  setIdeas(ideas.filter(idea => idea.id !== id));
 };
 ```
 
-Now, pass this function to the `IdeaCard` inside the `FlatList`'s `renderItem` prop.
+### 4. Displaying the List with `<FlatList>`
 
-**In `App.tsx`, update the `FlatList`:**
+We use `<FlatList>` to render our `ideas` array. It's highly performant because it uses **virtualization**—it only renders the items currently visible on the screen, not the entire list at once.
 
 ```tsx
-// ...
 <FlatList
-  data={ideas}
-  renderItem={({ item }) => (
-    <IdeaCard
-      id={item.id}
-      title={item.title}
-      description={item.description}
-      onDelete={deleteIdea} // Pass the delete function as a prop
-    />
-  )}
-  // ...
+  data={ideas} // 1. The data source
+  renderItem={renderItem} // 2. How to render each item
+  keyExtractor={item => item.id} // 3. A unique key for each item
+  ListEmptyComponent={/*...*/}
 />
-// ...
 ```
 
-Finally, we need to modify `IdeaCard.tsx` to receive this prop and call it when the delete button is pressed.
+1.  **`data={ideas}`**: This tells `FlatList` to use our `ideas` state as its data source.
+2.  **`renderItem={renderItem}`**: This prop takes a function that defines how to render each item. Our `renderItem` function returns an `<IdeaCard>` component.
+3.  **`keyExtractor`**: React needs a unique key for each item to track it efficiently. We use the idea's `id`.
 
-**In `components/IdeaCard.tsx`:**
+### 5. Child-to-Parent Communication: Prop Drilling
 
-```tsx
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+How does the `IdeaCard` (child) tell `App` (parent) to delete an idea? It can't directly. We pass the `deleteIdea` function down as a prop.
 
-interface IdeaCardProps {
-  id: string;
-  title: string;
-  description: string;
-  onDelete: (id: string) => void; // 1. Expect an onDelete prop
-}
+1.  **In `App.tsx`**, we define `deleteIdea`.
+2.  We pass it down through the `renderItem` function:
 
-export default function IdeaCard({ id, title, description, onDelete }: IdeaCardProps) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        {description ? <Text style={styles.description}>{description}</Text> : null}
-      </View>
-      <Pressable onPress={() => onDelete(id)} style={styles.deleteButton}> // 2. Call onDelete with the card's own id
-        <FontAwesome name="trash" size={24} color="#c91e1e" />
-      </Pressable>
-    </View>
-  );
-}
+    ```tsx
+    const renderItem = ({ item }: { item: Idea }) => (
+      <IdeaCard
+        title={item.title}
+        description={item.description}
+        date={item.date}
+        onDelete={() => deleteIdea(item.id)} // Pass it down!
+      />
+    );
+    ```
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  deleteButton: {
-    marginLeft: 16,
-    padding: 8,
-  },
-});
-```
-
-And that's it! You now have a fully functional, interactive app.
+3.  **In `IdeaCard.tsx`**, the component receives the `onDelete` function as a prop and calls it when its delete button is pressed. This triggers the state update in the parent component.
 
 ---
 
-## Final Code
+## Bonus Challenge: Upvoting Ideas
 
-Here is the complete, fully functional code for `App.tsx` that combines the refactored UI from Session 5 with the state logic from this session.
+Now that we understand how our app works, let's add a new feature: the ability to upvote ideas! This will reinforce the concepts we've learned and give you hands-on practice.
+
+### Step 1: Update the Idea Interface
+
+First, we need to modify our `Idea` interface to include a `likes` property. Find the interface in `App.tsx` and update it:
+
+```tsx
+interface Idea {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  likes: number; // Add this new property
+}
+```
+
+### Step 2: Update the addIdea Function
+
+Now we need to initialize the `likes` property when creating a new idea. Modify the `addIdea` function:
+
+```tsx
+const addIdea = () => {
+  if (newTitle.trim() === '') return; // Basic validation
+  const newIdea: Idea = {
+    id: Date.now().toString(),
+    title: newTitle,
+    description: newDescription,
+    date: new Date().toLocaleDateString(),
+    likes: 0, // Initialize likes to zero
+  };
+  setIdeas([newIdea, ...ideas]);
+  setNewTitle('');
+  setNewDescription('');
+};
+```
+
+### Step 3: Create the upvoteIdea Function
+
+Next, let's add a function to handle upvoting. Add this function after your `deleteIdea` function:
+
+```tsx
+const upvoteIdea = (id: string) => {
+  // Create a new array with the updated idea
+  setIdeas(
+    ideas.map(idea => 
+      idea.id === id 
+        ? { ...idea, likes: idea.likes + 1 } // Create a new object with likes incremented
+        : idea // Keep other ideas unchanged
+    )
+  );
+};
+```
+
+This function demonstrates another way to make **immutable updates**. Instead of `.filter()`, we use `.map()` to create a new array where one item is modified.
+
+### Step 4: Pass the upvoteIdea Function to IdeaCard
+
+Update the `renderItem` function to pass our new function as a prop:
+
+```tsx
+const renderItem = ({ item }: { item: Idea }) => (
+  <IdeaCard
+    title={item.title}
+    description={item.description}
+    date={item.date}
+    likes={item.likes} // Pass the likes count
+    onDelete={() => deleteIdea(item.id)}
+    onUpvote={() => upvoteIdea(item.id)} // Pass the upvote function
+  />
+);
+```
+
+### Step 5: Update the IdeaCard Component
+
+Now we need to modify the `IdeaCard` component to display the likes count and add an upvote button. Open `components/IdeaCard.tsx` and make these changes:
+
+1. First, update the props interface:
+
+```tsx
+interface IdeaCardProps {
+  title: string;
+  description: string;
+  date: string;
+  likes: number; // Add this
+  onDelete: () => void;
+  onUpvote: () => void; // Add this
+}
+```
+
+2. Then, add a like button and display the likes count. Find the return statement in your `IdeaCard` component and add this before the delete button:
+
+```tsx
+<View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+  <Text style={{ marginRight: 5 }}>{likes}</Text>
+  <Pressable 
+    onPress={onUpvote}
+    style={({ pressed }) => [{
+      opacity: pressed ? 0.7 : 1,
+      padding: 5,
+    }]}
+  >
+    <FontAwesome name="thumbs-up" size={16} color="#2196F3" />
+  </Pressable>
+</View>
+```
+
+3. Don't forget to destructure the new props at the top of your component:
+
+```tsx
+const IdeaCard = ({ title, description, date, likes, onDelete, onUpvote }: IdeaCardProps) => {
+  // Component code...
+}
+```
+
+### Step 6: Test Your Changes
+
+Run your app and test the upvote functionality:
+1. Add a new idea
+2. Press the thumbs-up button
+3. Verify that the likes count increases
+
+Congratulations! You've successfully added a new feature to your app using the React concepts we learned in this session.
+
+---
+
+## Final Code Review
+
+This is the complete code for `App.tsx`. Review it to ensure your file matches and to solidify your understanding of how all the pieces we've discussed fit together.
 
 <details>
 <summary>Click to see the final App.tsx code</summary>
@@ -310,8 +273,16 @@ Here is the complete, fully functional code for `App.tsx` that combines the refa
 ```tsx
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TextInput, 
-  Pressable, FlatList, Alert, Platform, KeyboardAvoidingView
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TextInput,
+  Pressable,
+  Alert,
+  FlatList,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Header from './components/Header';
@@ -323,6 +294,7 @@ interface Idea {
   title: string;
   description: string;
   date: string;
+  likes: number; // Added for the bonus challenge
 }
 
 const App = () => {
@@ -331,15 +303,13 @@ const App = () => {
   const [newDescription, setNewDescription] = useState('');
 
   const addIdea = () => {
-    if (newTitle.trim() === '') {
-      Alert.alert('Error', 'Please enter an idea title');
-      return;
-    }
+    if (newTitle.trim() === '') return; // Basic validation
     const newIdea: Idea = {
       id: Date.now().toString(),
       title: newTitle,
       description: newDescription,
       date: new Date().toLocaleDateString(),
+      likes: 0, // Initialize likes to zero
     };
     setIdeas([newIdea, ...ideas]);
     setNewTitle('');
@@ -347,10 +317,31 @@ const App = () => {
   };
 
   const deleteIdea = (id: string) => {
-    Alert.alert('Delete Idea', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setIdeas(ideas.filter(idea => idea.id !== id)) }
-    ]);
+    Alert.alert(
+      'Delete Idea',
+      'Are you sure you want to delete this idea?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setIdeas(ideas.filter(idea => idea.id !== id));
+          },
+        },
+      ]
+    );
+  };
+
+  const upvoteIdea = (id: string) => {
+    // Create a new array with the updated idea
+    setIdeas(
+      ideas.map(idea => 
+        idea.id === id 
+          ? { ...idea, likes: idea.likes + 1 } // Create a new object with likes incremented
+          : idea // Keep other ideas unchanged
+      )
+    );
   };
 
   const renderItem = ({ item }: { item: Idea }) => (
@@ -358,37 +349,46 @@ const App = () => {
       title={item.title}
       description={item.description}
       date={item.date}
+      likes={item.likes}
       onDelete={() => deleteIdea(item.id)}
+      onUpvote={() => upvoteIdea(item.id)}
     />
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <Header />
-        <View style={styles.inputContainer}>
-          <View style={styles.row}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter idea title"
-              value={newTitle}
-              onChangeText={setNewTitle}
-            />
-            <Pressable style={styles.addButton} onPress={addIdea}>
-              <FontAwesome name="plus" size={20} color="#fff" />
-            </Pressable>
-          </View>
+        <View style={styles.row}>
           <TextInput
-            style={[styles.input, styles.descriptionInput]}
-            placeholder="Enter idea description"
-            value={newDescription}
-            onChangeText={setNewDescription}
-            multiline
+            style={styles.input}
+            placeholder="Enter idea title"
+            value={newTitle}
+            onChangeText={setNewTitle}
           />
+          <Pressable style={styles.addButton} onPress={addIdea}>
+            <FontAwesome name="plus" size={20} color="#fff" />
+          </Pressable>
         </View>
+        <TextInput
+          style={[styles.input, styles.descriptionInput]}
+          placeholder="Enter idea description"
+          value={newDescription}
+          onChangeText={setNewDescription}
+          multiline
+        />
+
+        <View style={{ height: 10 }} />
+
+        <Text style={{ padding: 20, fontSize: 18, fontWeight: 'bold' }}>
+          Your Ideas
+        </Text>
+        <View style={{ height: 1, backgroundColor: '#ccc' }} />
+        <View style={{ height: 10 }} />
+
         <FlatList
           data={ideas}
           renderItem={renderItem}
@@ -402,57 +402,31 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  inputContainer: { 
-    padding: 20, 
-    backgroundColor: '#fff', 
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  row: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 10 
-  },
-  input: { 
-    flex: 1, 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: 8, 
-    padding: 12, 
-    borderWidth: 1, 
-    borderColor: '#e9ecef' 
-  },
-  descriptionInput: { 
-    height: 80, 
-    textAlignVertical: 'top' 
-  },
-  addButton: { 
-    backgroundColor: '#2196F3', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    padding: 12, 
-    borderRadius: 8,
-    marginLeft: 10
-  },
-  list: { flex: 1, paddingHorizontal: 10 },
-  emptyText: { textAlign: 'center', marginTop: 20, color: '#666' }
+  container: { flex: 1, backgroundColor: '#e1a6a6ff' },
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingHorizontal: 10, paddingTop: 10 },
+  input: { flex: 1, backgroundColor: '#f8f9fa', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#e9ecef' },
+  descriptionInput: { height: 80, textAlignVertical: 'top', marginHorizontal: 10, marginBottom: 0 },
+  addButton: { backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, marginLeft: 10 },
+  list: { flex: 1 },
+  emptyText: { textAlign: 'center', marginTop: 20, color: '#666' },
 });
+
+export default App;
 ```
+
+</details>
 
 ---
 
 ## Session Recap
 
-Congratulations! You have successfully transformed a static UI into a dynamic, interactive application. You learned some of the most fundamental concepts in React:
+Congratulations! By analyzing a working app, you have deconstructed some of the most fundamental concepts in React:
 
-*   **State Management:** How to use the `useState` hook to give your components memory.
-*   **Immutable Updates:** The critical importance of creating *new* arrays/objects when updating state, rather than modifying them directly.
-*   **Performant Lists:** Why `<FlatList>` is the correct choice for rendering lists on mobile and how to use its core props (`data`, `renderItem`, `keyExtractor`).
+*   **State Management:** How `useState` gives components memory.
+*   **Immutable Updates:** The critical importance of creating *new* arrays/objects when updating state.
+*   **Performant Lists:** Why `<FlatList>` is the correct choice for rendering lists on mobile.
 *   **Child-to-Parent Communication:** How to pass functions down as props to allow child components to trigger state changes in their parents.
 
-In the next session, we will explore how to navigate between multiple screens, a core feature of any real-world application.
+In the bonus challenge, you applied these concepts to add a new feature to the app, reinforcing your understanding through hands-on practice.
+
+In the next session, we will explore how to navigate between multiple screens.
