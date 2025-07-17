@@ -5,11 +5,16 @@ import {
   StyleSheet, 
   SafeAreaView, 
   TextInput, 
-  TouchableOpacity,
+  Pressable,
   Alert,
-  FlatList 
+  FlatList, 
+  TouchableOpacity,
+  Platform
 } from 'react-native';
 import IdeaCard from './components/IdeaCard';
+import { FontAwesome } from '@expo/vector-icons';
+import Header from './components/Header'; 
+import { KeyboardAvoidingView } from 'react-native';
 
 
 // Define the Idea data structure
@@ -66,54 +71,64 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>IdeaStorm</Text>
-        <Text style={styles.headerSubtitle}>Capture your creative ideas</Text>
-      </View>
+      <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={{ flex: 1 }}
+        >
+        <Header />
+        {/* <View style={styles.header}>
+          <Text style={styles.headerTitle}>IdeaStorm</Text>
+          <Text style={styles.headerSubtitle}>Capture your creative ideas</Text>
+        </View> */}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter idea title"
-          value={newTitle}
-          onChangeText={setNewTitle}
-        />
+        <View style={styles.row}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter idea title"
+            value={newTitle}
+            onChangeText={setNewTitle}
+          />
+          <Pressable style={styles.addButton} onPress={addIdea}>
+            <FontAwesome name="plus" size={20} color="#fff" />
+          </Pressable>
+        </View>
         <TextInput
           style={[styles.input, styles.descriptionInput]}
           placeholder="Enter idea description"
-          multiline
           value={newDescription}
           onChangeText={setNewDescription}
+          multiline
         />
-        <TouchableOpacity style={styles.addButton} onPress={addIdea}>
-          <Text style={styles.buttonText}>Add Idea</Text>
-        </TouchableOpacity>
-      </View>
 
-      <Text style={{ padding: 20, fontSize: 18, fontWeight: 'bold' }}>Your Ideas</Text>
-      <View style={{ height: 1, backgroundColor: '#ccc' }} />
-      <View style={{ height: 10 }} />
+        <View style={{ height: 10 }} />
 
-      <FlatList
-        data={ideas}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        style={styles.list}
-        ListEmptyComponent={<Text style={styles.emptyText}>No ideas yet. Start adding some!</Text>}
-      />
+
+        <Text style={{ padding: 20, fontSize: 18, fontWeight: 'bold' }}>Your Ideas</Text>
+        <View style={{ height: 1, backgroundColor: '#ccc' }} />
+        <View style={{ height: 10 }} />
+
+        <FlatList
+          data={ideas}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          style={styles.list}
+          ListEmptyComponent={<Text style={styles.emptyText}>No ideas yet. Start adding some!</Text>}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
+
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e1a6a6ff' },
-  header: { padding: 20, backgroundColor: '#2196F3', alignItems: 'center' },
-  headerTitle: { fontSize: 38, fontWeight: 'bold', color: '#fff' },
-  headerSubtitle: { fontSize: 20, color: '#fff', opacity: 0.8 },
-  inputContainer: { padding: 20, backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 2 },
-  input: { backgroundColor: '#f8f9fa', borderRadius: 8, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#e9ecef' },
+  //header: { padding: 20, backgroundColor: '#2196F3', alignItems: 'center' },
+  //headerTitle: { fontSize: 38, fontWeight: 'bold', color: '#fff' },
+  //headerSubtitle: { fontSize: 20, color: '#fff', opacity: 0.8 },
+  row: { flexDirection: 'row', alignItems: 'center',  marginBottom:10 },
+  input: { flex: 1, backgroundColor: '#f8f9fa', borderRadius: 8, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#e9ecef' },
   descriptionInput: { height: 80, textAlignVertical: 'top' },
-  addButton: { backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
+  addButton: { backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, marginLeft: 10 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   list: { flex: 1 },
   emptyText: { textAlign: 'center', marginTop: 20, color: '#666' }
