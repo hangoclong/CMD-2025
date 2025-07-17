@@ -22,11 +22,21 @@
 
 ## Live Coding - Bringing "IdeaStorm" to Life
 
-Our app looks great after the refactoring in Session 5, but it's still just a pretty picture. It doesn't remember what we type, and the buttons don't do anything. Today, we'll add the "brain" to our app using React's state management.
+Our app looks great after the UI refactoring in Session 5. We have a clean component structure and modern components like `<Pressable>`. However, it's still just a pretty picture. It doesn't remember what we type, and the button doesn't do anything. Today, we'll add the "brain" to our app using React's state management.
 
 ### Step 1: Adding State with `useState`
 
 First, we need to give our `App` component some memory. We need to remember:
+
+**What is State? An Analogy**
+
+Think of a component's `state` as its short-term memory. It's any data that can change over time and should cause the UI to re-render. React gives us a special tool called the `useState` hook to manage this memory.
+
+Imagine `useState` gives you a box:
+1.  The value currently inside the box (e.g., `newTitle`).
+2.  A special function to replace what's in the box (e.g., `setNewTitle`).
+
+When you use the special function to change the value, React knows it needs to update the screen to show the new value. This is the core of interactivity in React.
 1.  The text the user is currently typing in the "title" input.
 2.  The text for the "description" input.
 3.  The list of all the ideas that have been added.
@@ -126,7 +136,7 @@ const addIdea = () => {
   if (!newTitle.trim()) return;
 
   const newIdea: Idea = {
-    id: Math.random().toString(), // NOTE: Not a great unique ID, but fine for now.
+    id: Date.now().toString(), // NOTE: Not a truly unique ID, but fine for our example.
     title: newTitle,
     description: newDescription,
   };
@@ -142,24 +152,31 @@ const addIdea = () => {
 // ...
 ```
 
-**Important:** We use `setIdeas((currentIdeas) => [...currentIdeas, newIdea]);`. We are creating a **new** array with the old items (`...currentIdeas`) plus the new one. Never modify state directly (e.g., `ideas.push(newIdea)`). React relies on seeing a new object/array to trigger a re-render.
+**The Golden Rule of State: Treat it as Immutable!**
+
+This line is critical: `setIdeas((currentIdeas) => [...currentIdeas, newIdea]);`.
+
+We are creating a **brand new** array. We use the spread syntax (`...currentIdeas`) to copy all the old items, and then we add the `newIdea` at the end. 
+
+**Why?** React's performance is built on a simple check: has the state *variable itself* changed? If you just `push` to the existing array, the array variable in memory is still the same, so React won't see a change and won't re-render the UI. By creating a *new* array, we force React to see the change and update the screen.
 
 Now, let's wire up our inputs and button.
 
 **In `App.tsx`, update the input and button JSX:**
 
 ```tsx
-// ... inside the inputContainer
-<TextInput
-  style={styles.input}
-  placeholder="Enter idea title"
-  value={newTitle} // Bind value to state
-  onChangeText={setNewTitle} // Update state on change
-/>
-<Pressable style={styles.addButton} onPress={addIdea}> // Call addIdea on press
-  <FontAwesome name="plus" size={20} color="#fff" />
-</Pressable>
-// ...
+// ... inside the inputContainer View
+<View style={styles.row}>
+  <TextInput
+    style={styles.input}
+    placeholder="Enter idea title"
+    value={newTitle} // Bind value to state
+    onChangeText={setNewTitle} // Update state on change
+  />
+  <Pressable style={styles.addButton} onPress={addIdea}> // Call addIdea on press
+    <FontAwesome name="plus" size={20} color="#fff" />
+  </Pressable>
+</View>
 <TextInput
   style={[styles.input, styles.descriptionInput]}
   placeholder="Enter idea description"
@@ -172,6 +189,8 @@ Now, let's wire up our inputs and button.
 ### Step 4: Deleting Ideas
 
 To delete an idea, the `IdeaCard` (the child) needs to tell the `App` component (the parent) to remove an item from its state. We do this by passing a function down as a prop.
+
+This pattern is very common in React and is sometimes called **"prop drilling"**—where a parent component "drills" a function or data down through its children.
 
 **In `App.tsx`, create the `deleteIdea` handler:**
 
@@ -283,152 +302,145 @@ And that's it! You now have a fully functional, interactive app.
 
 ## Final Code
 
-Here is the complete code for `App.tsx` after our changes.
+Here is the complete, fully functional code for `App.tsx` that combines the refactored UI from Session 5 with the state logic from this session.
+
+<details>
+<summary>Click to see the final App.tsx code</summary>
 
 ```tsx
 import React, { useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  FlatList,
-  SafeAreaView,
-  TextInput,
-  Pressable,
+  View, Text, StyleSheet, SafeAreaView, TextInput, 
+  Pressable, FlatList, Alert, Platform, KeyboardAvoidingView
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Header from './components/Header';
 import IdeaCard from './components/IdeaCard';
 
-// Define the structure of a single idea
-export interface Idea {
+// Define the Idea data structure
+interface Idea {
   id: string;
   title: string;
   description: string;
+  date: string;
 }
 
-export default function App() {
-  // --- STATE --- //
+const App = () => {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [ideas, setIdeas] = useState<Idea[]>([]);
 
   const addIdea = () => {
-    if (!newTitle.trim()) return;
-
+    if (newTitle.trim() === '') {
+      Alert.alert('Error', 'Please enter an idea title');
+      return;
+    }
     const newIdea: Idea = {
-      id: Math.random().toString(),
+      id: Date.now().toString(),
       title: newTitle,
       description: newDescription,
+      date: new Date().toLocaleDateString(),
     };
-
-    setIdeas((currentIdeas) => [...currentIdeas, newIdea]);
-
+    setIdeas([newIdea, ...ideas]);
     setNewTitle('');
     setNewDescription('');
   };
 
   const deleteIdea = (id: string) => {
-    setIdeas((currentIdeas) => {
-      return currentIdeas.filter((idea) => idea.id !== id);
-    });
+    Alert.alert('Delete Idea', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => setIdeas(ideas.filter(idea => idea.id !== id)) }
+    ]);
   };
+
+  const renderItem = ({ item }: { item: Idea }) => (
+    <IdeaCard
+      title={item.title}
+      description={item.description}
+      date={item.date}
+      onDelete={() => deleteIdea(item.id)}
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-      <View style={styles.inputContainer}>
-        <View style={styles.row}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={{ flex: 1 }}
+      >
+        <Header />
+        <View style={styles.inputContainer}>
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter idea title"
+              value={newTitle}
+              onChangeText={setNewTitle}
+            />
+            <Pressable style={styles.addButton} onPress={addIdea}>
+              <FontAwesome name="plus" size={20} color="#fff" />
+            </Pressable>
+          </View>
           <TextInput
-            style={styles.input}
-            placeholder="Enter idea title"
-            value={newTitle}
-            onChangeText={setNewTitle}
+            style={[styles.input, styles.descriptionInput]}
+            placeholder="Enter idea description"
+            value={newDescription}
+            onChangeText={setNewDescription}
+            multiline
           />
-          <Pressable style={styles.addButton} onPress={addIdea}>
-            <FontAwesome name="plus" size={20} color="#fff" />
-          </Pressable>
         </View>
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Enter idea description"
-          value={newDescription}
-          onChangeText={setNewDescription}
-          multiline
-        />
-      </View>
-
-      <View style={styles.listContainer}>
         <FlatList
           data={ideas}
-          renderItem={({ item }) => (
-            <IdeaCard
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              onDelete={deleteIdea}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<View style={styles.emptyComponent}><Text style={styles.emptyText}>No ideas yet. Add one!</Text></View>}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          style={styles.list}
+          ListEmptyComponent={<Text style={styles.emptyText}>No ideas yet. Start adding some!</Text>}
         />
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f4f8',
-  },
-  inputContainer: {
-    padding: 16,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  inputContainer: { 
+    padding: 20, 
+    backgroundColor: '#fff', 
     borderBottomWidth: 1,
-    borderBottomColor: '#dde3e8',
+    borderBottomColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+  row: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 10 
   },
-  input: {
-    flex: 1,
-    borderColor: '#c0c8d1',
-    borderWidth: 1,
+  input: { 
+    flex: 1, 
+    backgroundColor: '#f8f9fa', 
+    borderRadius: 8, 
+    padding: 12, 
+    borderWidth: 1, 
+    borderColor: '#e9ecef' 
+  },
+  descriptionInput: { 
+    height: 80, 
+    textAlignVertical: 'top' 
+  },
+  addButton: { 
+    backgroundColor: '#2196F3', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 12, 
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    marginLeft: 10
   },
-  descriptionInput: {
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  addButton: {
-    backgroundColor: '#4a90e2',
-    marginLeft: 12,
-    padding: 12,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContainer: {
-    flex: 1,
-    paddingHorizontal: 8,
-  },
-  emptyComponent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#888',
-  },
+  list: { flex: 1, paddingHorizontal: 10 },
+  emptyText: { textAlign: 'center', marginTop: 20, color: '#666' }
 });
 ```
 
