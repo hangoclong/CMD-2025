@@ -147,6 +147,122 @@ const styles = StyleSheet.create({
 export default StartGameScreen;
 ```
 
+Next, let's create the Game screen:
+
+```tsx
+// screens/GameScreen.tsx
+import React from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Define the type for our navigation prop
+type RootStackParamList = {
+  StartGame: undefined;
+  Game: undefined;
+  GameOver: undefined;
+};
+
+type GameScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Game'>;
+};
+
+function GameScreen({ navigation }: GameScreenProps) { 
+  
+  function handleEndGame() {
+    // Navigate to the GameOver screen
+    navigation.navigate('GameOver'); 
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Guess the Number</Text>
+      <Text style={styles.subtitle}>Try to guess the number between 1 and 100!</Text>
+      
+      {/* In a real game, we would have input for guesses and game logic here */}
+      
+      <Button title="End Game" onPress={handleEndGame} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+});
+
+export default GameScreen;
+```
+
+Finally, let's create the GameOver screen:
+
+```tsx
+// screens/GameOverScreen.tsx
+import React from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Define the type for our navigation prop
+type RootStackParamList = {
+  StartGame: undefined;
+  Game: undefined;
+  GameOver: undefined;
+};
+
+type GameOverScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'GameOver'>;
+};
+
+function GameOverScreen({ navigation }: GameOverScreenProps) { 
+  
+  function handlePlayAgain() {
+    // Navigate back to the StartGame screen
+    navigation.navigate('StartGame'); 
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Game Over!</Text>
+      <Text style={styles.subtitle}>Thanks for playing!</Text>
+      <Button title="Play Again" onPress={handlePlayAgain} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+  },
+});
+
+export default GameOverScreen;
+```
+
 --- 
 
 ## Student Task: Customize a Screen's Header
