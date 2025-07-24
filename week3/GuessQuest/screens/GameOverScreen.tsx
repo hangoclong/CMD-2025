@@ -23,7 +23,7 @@ function GameOverScreen({ navigation, route }: GameOverScreenProps) {
   const { playerName, targetNumber, guessCount, gaveUp = false } = route.params;
   
   function handlePlayAgain() {
-    // Navigate back to the StartGame screen
+    // Navigate back to the screen of StartGame 
     navigation.navigate('StartGame'); 
   }
 
