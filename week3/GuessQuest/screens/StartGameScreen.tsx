@@ -6,7 +6,9 @@
 // 3. Passing the name as a parameter when navigating to the Game screen
 
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image } from 'react-native';
+import Card from '../components/Card';
+import PrimaryButton from '../components/PrimaryButton';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // Import shared navigation types
@@ -30,30 +32,23 @@ function StartGameScreen({ navigation }: StartGameScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Added a simple logo/image for visual appeal */}
       <Image 
         source={require('../assets/quest-icon.png')} 
         style={styles.logo}
-        // If the image doesn't exist, this will show a placeholder
         onError={() => console.log('Image could not be loaded')}
       />
-      
       <Text style={styles.title}>Welcome to GuessQuest!</Text>
-      
-      {/* Added TextInput for player name */}
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        value={playerName}
-        onChangeText={setPlayerName}
-        autoCorrect={false}
-        maxLength={20}
-      />
-      
-      <Button 
-        title="Start Game" 
-        onPress={handleStartGame} 
-      />
+      <Card>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your name"
+          value={playerName}
+          onChangeText={setPlayerName}
+          autoCorrect={false}
+          maxLength={20}
+        />
+        <PrimaryButton onPress={handleStartGame}>Start Game</PrimaryButton>
+      </Card>
     </View>
   );
 }
@@ -61,10 +56,9 @@ function StartGameScreen({ navigation }: StartGameScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    paddingTop: 50, // Add padding to avoid status bar overlap
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', // Light background color
+    backgroundColor: '#f5f5f5',
   },
   logo: {
     width: 100,
