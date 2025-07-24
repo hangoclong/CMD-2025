@@ -426,6 +426,8 @@ return (
   </View>
 );
 ```
+
+```tsx
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 

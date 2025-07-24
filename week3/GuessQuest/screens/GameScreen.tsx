@@ -84,7 +84,7 @@ function GameScreen({ navigation, route }: GameScreenProps) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
-        <Title>Opponent's Guess</Title>
+        <Title >Opponent's Guess</Title>
         <Text style={styles.greeting}>Hello, {playerName}!</Text>
         {content}
         <Text style={styles.guessCount}>Guesses: {guessCount}/3</Text>
@@ -111,10 +111,17 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    color: 'black',
+  },
   container: {
     flex: 1,
     padding: 24,
     alignItems: 'center',
+    color: 'black',
   },
   contentLandscape: {
     flexDirection: 'row',
@@ -125,7 +132,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 18,
     marginBottom: 12,
-    color: 'white',
+    color: 'black',
   },
   guessCount: {
     fontSize: 16,
