@@ -6,7 +6,7 @@
 // 3. Using the RouteProp type to properly type the route parameters
 
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, SafeAreaView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -28,7 +28,8 @@ function GameOverScreen({ navigation, route }: GameOverScreenProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
       <Text style={styles.title}>Game Over!</Text>
       
       {/* Display personalized results */}
@@ -50,10 +51,14 @@ function GameOverScreen({ navigation, route }: GameOverScreenProps) {
         color="#6a1b9a"
       />
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

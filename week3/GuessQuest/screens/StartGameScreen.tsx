@@ -6,7 +6,7 @@
 // 3. Passing the name as a parameter when navigating to the Game screen
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, SafeAreaView } from 'react-native';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,7 +31,8 @@ function StartGameScreen({ navigation }: StartGameScreenProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
       <Image 
         source={require('../assets/quest-icon.png')} 
         style={styles.logo}
@@ -50,10 +51,14 @@ function StartGameScreen({ navigation }: StartGameScreenProps) {
         <PrimaryButton onPress={handleStartGame}>Start Game</PrimaryButton>
       </Card>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingTop: 50, // Add padding to avoid status bar overlap
