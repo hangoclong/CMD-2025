@@ -1,6 +1,6 @@
 # Week 3, Session 8: Data Flow & Componentization
 
-**Objective:** To master data flow between screens using React Navigation's route parameters and learn how to break down complex UIs into reusable components for the "GuessQuest" project.
+**Objective:** To master data flow between screens using React Navigation's route parameters and learn how to break down complex UIs into reusable components for the "GuessQuest" project
 
 > **Note:** This session continues directly from Session 7. You should have completed the React Navigation setup from the previous session and have a working GuessQuest app with navigation between screens.
 
@@ -285,16 +285,18 @@ Writing the same styling for every button or every card is tedious and error-pro
 * **Maintainability:** Need to change the button color? Edit one file: `PrimaryButton.tsx`.
 * **Readability:** `<Card>...</Card>` is much clearer than a `<View>` with 10 different style properties.
 
-### Refactoring Step 1: Creating `Card.tsx`
 
-Our `StartGameScreen` uses a container with shadows and rounded corners. Let's turn this into a `Card` component.
 
-```tsx
+
 ### Step 0: Create the `components` Directory
 
 First, create a new folder named `components` in the root of your `GuessQuest` project. This is where we will store all our reusable components.
 
 ### Refactoring Step 1: Creating `Card.tsx`
+
+Our `StartGameScreen` uses a container with shadows and rounded corners. Let's turn this into a `Card` component.
+
+```tsx
 import React from 'react'; // Import React
 import { View, StyleSheet } from 'react-native';
 
@@ -327,33 +329,30 @@ const styles = StyleSheet.create({
 });
 ```
 
-### Refactoring Step 2: Creating `PrimaryButton.tsx`
+### Refactoring Step 2: Creating  `PrimaryButton.tsx`
 
-We will have many buttons in our app. Let's create a standard, reusable button component.
+We will have many buttons in our app. Let's create a standard, reusable button component with built-in press feedback.
 
 ```tsx
 // In components/PrimaryButton.tsx
-import React from 'react'; // Import React
+import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 
-// Define the props type for our PrimaryButton component
 type PrimaryButtonProps = {
-  children: React.ReactNode; // The text or content inside the button
-  onPress: () => void; // The function to call when button is pressed
+  children: React.ReactNode;
+  onPress: () => void;
 };
 
-// Create the PrimaryButton component with typed props
 function PrimaryButton({ children, onPress }: PrimaryButtonProps) {
-  // This function handles the press state for iOS (Android uses ripple effect)
-  function pressHandler(pressed: boolean) {
-    return pressed ? [styles.buttonInnerContainer, styles.pressed] : styles.buttonInnerContainer;
-  }
-
   return (
     <View style={styles.buttonOuterContainer}>
-      <Pressable 
-        style={({pressed}) => pressHandler(pressed)} 
-        onPress={onPress} 
+      <Pressable
+        style={({ pressed }) =>
+          pressed
+            ? [styles.buttonInnerContainer, styles.pressed]
+            : styles.buttonInnerContainer
+        }
+        onPress={onPress}
         android_ripple={{ color: '#640233' }}
       >
         <Text style={styles.buttonText}>{children}</Text>
@@ -364,13 +363,11 @@ function PrimaryButton({ children, onPress }: PrimaryButtonProps) {
 
 export default PrimaryButton;
 
-// Complete styles for our button
 const styles = StyleSheet.create({
   buttonOuterContainer: {
     borderRadius: 28,
     margin: 4,
-    overflow: 'hidden', // Ensures the ripple doesn't exceed the container
-    width: '40%', // Takes up 40% of the parent width
+    overflow: 'hidden',
   },
   buttonInnerContainer: {
     backgroundColor: '#72063c',
@@ -381,27 +378,54 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
-  // Style for pressed state on iOS
   pressed: {
     opacity: 0.75,
   },
 });
 ```
 
-### The Final Result: A Clean `StartGameScreen.tsx`
+### Refactoring Step 3: Using the New Components in `StartGameScreen`
 
-After creating our new components, we can import and use them. Look how much cleaner our screen code becomes!
+Now that we have our reusable components, let's update `StartGameScreen.tsx` to use them. This will make our screen's code cleaner and more declarative.
+
+**1. Import the New Components:**
+First, import `Card` and `PrimaryButton` at the top of `StartGameScreen.tsx` and remove the unused `Button` import.
 
 ```tsx
 // In screens/StartGameScreen.tsx
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { View, Text, StyleSheet, TextInput, Image } from 'react-native';
+import Card from '../components/Card';
+import PrimaryButton from '../components/PrimaryButton';
+```
 
-// Import our custom components
+**2. Update the JSX:**
+Next, replace the standard `TextInput` and `Button` with our new custom components. Wrap them inside the `<Card>` component to get the themed styling.
+
+```tsx
+// In StartGameScreen.tsx, update the return statement
+return (
+  <View style={styles.container}>
+    <Image 
+      source={require('../assets/quest-icon.png')} 
+      style={styles.logo}
+      onError={() => console.log('Image could not be loaded')}
+    />
+    <Text style={styles.title}>Welcome to GuessQuest!</Text>
+    <Card>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your name"
+        value={playerName}
+        onChangeText={setPlayerName}
+        autoCorrect={false}
+        maxLength={20}
+      />
+      <PrimaryButton onPress={handleStartGame}>Start Game</PrimaryButton>
+    </Card>
+  </View>
+);
+```
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 
