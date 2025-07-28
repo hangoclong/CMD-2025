@@ -159,17 +159,36 @@ For the context to be available to all our screens, we must wrap our entire app'
 
 ```tsx
 // app/_layout.tsx
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import 'react-native-reanimated';
+
+import { useColorScheme } from '@/hooks/useColorScheme';
 import FavoritesContextProvider from '../context/favorites-context'; // 1. Import
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const [loaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
+
+  if (!loaded) {
+    // Async font loading only occurs in development.
+    return null;
+  }
+
   return (
-    // 2. Wrap the entire Stack navigator with the provider
+    // 2. Wrap the entire app with the provider
     <FavoritesContextProvider>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
     </FavoritesContextProvider>
   );
 }
@@ -251,7 +270,7 @@ Your task is to use the global `FavoritesContext` to create a new screen that di
 2.  **Fetch All Movies:** Inside this new screen, fetch the same list of popular movies as `MoviesScreen`.
 3.  **Consume Context:** Use `useContext` to get the list of favorite movie IDs.
 4.  **Filter and Display:** Filter the full movie list to show only the movies whose IDs are in the favorites context.
-5.  **Add a New Tab:** Modify `app/(tabs)/_layout.tsx` to add a new tab that points to your `FavoritesScreen`.
+5.  **Add a New Tab:** Modify `app/(tabs)/_layout.tsx` to add a new tab that points to your `FavoritesScreen`, and create a new file `app/(tabs)/favorites.tsx` that renders your FavoritesScreen component.
 
 ### Hint
 
@@ -266,6 +285,23 @@ const favoriteMovies = allMovies.filter(movie =>
 );
 
 // Then, use 'favoriteMovies' as the data for your FlatList.
+```
+
+And don't forget to create the tab file at `app/(tabs)/favorites.tsx`:
+
+```tsx
+// app/(tabs)/favorites.tsx
+import React from 'react';
+import { View } from 'react-native';
+import FavoritesScreen from '../../screens/FavoritesScreen';
+
+export default function FavoritesTab() {
+  return (
+    <View style={{ flex: 1 }}>
+      <FavoritesScreen />
+    </View>
+  );
+}
 ```
 
 ---
@@ -283,3 +319,94 @@ const favoriteMovies = allMovies.filter(movie =>
 > "Our app is getting more professional. To add more polish, let's learn how to improve the user experience of our lists and interact with the phone's hardware."
 
 **Next time:** We will explore advanced list features like pull-to-refresh and learn how to access native device APIs like the image picker.
+
+---
+
+## Part 5: Challenge - Simple UI Improvements
+
+### Your Goal: Enhance the Visual Appeal and Usability of the Movie Lists
+
+The current UI is functional but could use some visual and usability enhancements. Make the following simple adjustments to improve the look and feel of the movie lists in both `MoviesScreen` and `FavoritesScreen`:
+
+1. **Add Movie Poster Images:**
+   - Use the TMDB image API to display movie posters
+   - The base URL for images is: `https://image.tmdb.org/t/p/w92{poster_path}`
+   - The `poster_path` property is available in the movie data
+
+2. **Improve List Item Styling:**
+   - Add more padding and margin for better spacing
+   - Use a card-like appearance for each movie item
+   - Implement a subtle shadow effect
+
+3. **Enhance Typography:**
+   - Use different font sizes for title and release date
+   - Add a subtle color to differentiate information types
+
+4. **Fix Status Bar Overlap:**
+   - Use `SafeAreaView` from React Native to ensure content doesn't overlap with the status bar
+   - Apply proper padding to accommodate device notches and system UI elements
+
+### Example Implementation for Movie Item Styling:
+
+```tsx
+// Example styling improvements for MovieItem
+<View style={{
+  margin: 8,
+  padding: 12,
+  borderRadius: 8,
+  backgroundColor: '#fff',
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+  elevation: 3,
+}}>
+  {item.poster_path && (
+    <Image
+      source={{ uri: `https://image.tmdb.org/t/p/w92${item.poster_path}` }}
+      style={{ width: 50, height: 75, borderRadius: 4, marginRight: 12 }}
+    />
+  )}
+  <View style={{ flex: 1 }}>
+    <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>
+      {item.title}
+    </Text>
+    <Text style={{ fontSize: 14, color: '#666' }}>
+      Release Date: {item.release_date}
+    </Text>
+  </View>
+  <FavoriteButton movieId={item.id} />
+</View>
+```
+
+**Note:** Remember to import the necessary components:
+- `Image` from `react-native` or `expo-image` for displaying posters
+- `SafeAreaView` from `react-native-safe-area-context` for handling safe areas
+
+### Example Implementation for Safe Area Handling:
+
+```tsx
+// In your screen component
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+function MoviesScreen() {
+  // ... existing state and data fetching logic
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Your existing screen content */}
+      <FlatList
+        // ... existing FlatList props
+        contentContainerStyle={{ paddingHorizontal: 10 }}
+      />
+    </SafeAreaView>
+  );
+}
+```
+
+### Bonus Challenge:
+
+- Add a rating display using stars or a numeric value (the `vote_average` property in the movie data)
+- Implement a simple color scheme that differentiates between the Movies and Favorites screens

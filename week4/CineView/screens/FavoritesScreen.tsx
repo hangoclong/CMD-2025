@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import FavoriteButton from '../components/FavoriteButton';
+import { FavoritesContext } from '../context/favorites-context';
 
 // Movie type definition
 type Movie = {
@@ -9,7 +10,7 @@ type Movie = {
   release_date: string;
 };
 
-function MoviesScreen() {
+function FavoritesScreen() {
   // 1. Start in a loading state by default
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,6 +19,9 @@ function MoviesScreen() {
 
   // 3. Error will be null initially
   const [error, setError] = useState<Error | null>(null);
+
+  // Get the favorites context
+  const favoritesCtx = useContext(FavoritesContext);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -57,22 +61,33 @@ function MoviesScreen() {
     );
   }
 
+  // Filter movies to only show favorites
+  const favoriteMovies = data.filter(movie => 
+    favoritesCtx.ids.includes(movie.id)
+  );
+
   // 3. Handle the success state
   return (
     <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={({ id }) => id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.movieItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.movieTitle}>{item.title}</Text>
-              <Text>Release Date: {item.release_date}</Text>
+      {favoriteMovies.length === 0 ? (
+        <View style={styles.centered}>
+          <Text>No favorite movies yet. Add some from the Movies tab!</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={favoriteMovies}
+          keyExtractor={({ id }) => id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.movieItem}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.movieTitle}>{item.title}</Text>
+                <Text>Release Date: {item.release_date}</Text>
+              </View>
+              <FavoriteButton movieId={item.id} />
             </View>
-            <FavoriteButton movieId={item.id} />
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -101,4 +116,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MoviesScreen;
+export default FavoritesScreen;
