@@ -4,7 +4,7 @@
 
 **Objective:** Our objective is to add a layer of professional polish and powerful native features to our "CineView" app, including dynamic list updates and interaction with device hardware like the photo library and GPS.
 
-![CineView App Screenshot](../s11/image.png){width=400}
+![CineView App Screenshot](image.png){width=400}
 
 ---
 
@@ -303,3 +303,11 @@ You've now made "CineView" feel like a professional, modern app!
 -   Successfully integrated the device's media library using `expo-image-picker`.
 
 **Next time:** The Capstone Project begins! We will build a full-stack marketplace app with user authentication and a cloud database.
+
+
+### Test these new features:
+
+- Try pulling down on the Movies screen to refresh
+- Scroll to the bottom of the Movies screen to load more movies
+- Go to the Profile tab and try selecting a profile picture
+- Test the location feature to see your current coordinates
