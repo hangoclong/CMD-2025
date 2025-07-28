@@ -121,13 +121,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     alignItems: 'center',
-    color: 'black',
+    justifyContent: 'center',
   },
   contentLandscape: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     width: '100%',
+    paddingHorizontal: 40,
   },
   greeting: {
     fontSize: 18,

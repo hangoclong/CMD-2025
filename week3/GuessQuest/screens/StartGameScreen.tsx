@@ -63,7 +63,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 50, // Add padding to avoid status bar overlap
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#f5f5f5',
+    paddingHorizontal: 20,
   },
   logo: {
     width: 100,
