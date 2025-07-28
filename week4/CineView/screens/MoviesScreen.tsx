@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import FavoriteButton from '../components/FavoriteButton';
 
 // Movie type definition
@@ -7,6 +9,8 @@ type Movie = {
   id: number;
   title: string;
   release_date: string;
+  poster_path: string | null;
+  vote_average: number;
 };
 
 function MoviesScreen() {
@@ -59,21 +63,29 @@ function MoviesScreen() {
 
   // 3. Handle the success state
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <FlatList
         data={data}
         keyExtractor={({ id }) => id.toString()}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <View style={styles.movieItem}>
-            <View style={{ flex: 1 }}>
+            {item.poster_path && (
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w92${item.poster_path}` }}
+                style={styles.poster}
+              />
+            )}
+            <View style={styles.movieInfo}>
               <Text style={styles.movieTitle}>{item.title}</Text>
-              <Text>Release Date: {item.release_date}</Text>
+              <Text style={styles.releaseDate}>Release Date: {item.release_date}</Text>
+              <Text style={styles.rating}>Rating: {item.vote_average.toFixed(1)}/10</Text>
             </View>
             <FavoriteButton movieId={item.id} />
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -82,22 +94,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  listContent: {
+    padding: 10,
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   movieItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    margin: 8,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#fff',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  poster: {
+    width: 50,
+    height: 75,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  movieInfo: {
+    flex: 1,
   },
   movieTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  releaseDate: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
+  },
+  rating: {
+    fontSize: 14,
+    color: '#5c6bc0',
   },
 });
 

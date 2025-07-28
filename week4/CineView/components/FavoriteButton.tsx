@@ -16,10 +16,17 @@ function FavoriteButton({ movieId }: { movieId: number }) {
   }
 
   return (
-    <Pressable onPress={toggleFavorite} style={{ padding: 8 }}>
+    <Pressable 
+      onPress={toggleFavorite} 
+      style={({ pressed }) => [{
+        padding: 8,
+        opacity: pressed ? 0.7 : 1,
+        transform: [{ scale: pressed ? 0.95 : 1 }],
+      }]}
+    >
       <Ionicons
         name={isFavorite ? 'star' : 'star-outline'}
-        size={24}
+        size={28}
         color="gold"
       />
     </Pressable>

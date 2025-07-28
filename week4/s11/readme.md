@@ -2,7 +2,7 @@
 
 **Objective:** Learn how to fetch live data from a third-party REST API (The Movie Database) and display it in our React Native app, "CineView". Master asynchronous JavaScript, state management for API calls, and rendering dynamic data.
 
-![CineView App Screenshot](image-1.png)
+![CineView App Screenshot](image.png){width=40%}
 
 ---
 
