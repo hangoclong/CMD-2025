@@ -22,25 +22,54 @@ function MoviesScreen() {
 
   // 3. Error will be null initially
   const [error, setError] = useState<Error | null>(null);
+  
+  // 4. New state for pull-to-refresh
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // 5. New state for pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Refactored fetchMovies to handle pagination
+  const fetchMovies = async (page = 1, shouldReplace = true) => {
+    try {
+      // Using the API key provided by Dr. Long
+      const response = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=7ec7d584b11035c6ddb69c329786369a&page=${page}`
+      );
+      const json = await response.json();
+      
+      if (shouldReplace) {
+        // Replace existing data (for initial load or refresh)
+        setData(json.results);
+      } else {
+        // Append new data (for infinite scroll)
+        setData(prevData => [...prevData, ...json.results]);
+      }
+      
+      setCurrentPage(page);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false); // Also handle the refreshing state
+    }
+  };
+  
+  // Handler for pull-to-refresh
+  const handleRefresh = async () => {
+    console.log('Refreshing movie list...');
+    setIsRefreshing(true);
+    await fetchMovies(1, true); // Fetch page 1 and replace existing data
+  };
+  
+  // Handler for infinite scroll
+  const loadMoreMovies = () => {
+    console.log('Loading more movies, page:', currentPage + 1);
+    fetchMovies(currentPage + 1, false); // Fetch next page and append data
+  };
 
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        // Using the API key provided by Dr. Long
-        const response = await fetch(
-          'https://api.themoviedb.org/3/movie/popular?api_key=7ec7d584b11035c6ddb69c329786369a'
-        );
-        const json = await response.json();
-        setData(json.results); // Set data on success
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('An unknown error occurred')); // Set error on failure
-      } finally {
-        // This block runs regardless of success or failure
-        setIsLoading(false); // Stop loading
-      }
-    };
-
-    fetchMovies();
+    fetchMovies(1, true); // Initial fetch
   }, []); // Empty array means this runs only ONCE
 
   // 1. Handle the loading state
@@ -84,6 +113,12 @@ function MoviesScreen() {
             <FavoriteButton movieId={item.id} />
           </View>
         )}
+        // Pull-to-refresh props
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        // Infinite scroll props
+        onEndReached={loadMoreMovies}
+        onEndReachedThreshold={0.5}
       />
     </SafeAreaView>
   );
