@@ -1,8 +1,29 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { logAuthEvent } from '../../lib/supabase';
 
 export default function TabLayout() {
+  const { session, loading } = useAuth();
+
+  // useEffect hook to check the session and redirect
+  useEffect(() => {
+    if (!loading && !session) {
+      // If not loading and no session, redirect to the login screen
+      logAuthEvent('No session detected, redirecting to login');
+      router.replace('/login');
+    } else if (!loading && session) {
+      logAuthEvent('Session detected', { user: session.user.email });
+    }
+  }, [session, loading]);
+
+  // Don't render tabs until we know the authentication state
+  if (loading) {
+    return null;
+  }
+  
+  // Only render tabs if authenticated
   return (
     <Tabs
       screenOptions={{
