@@ -5,8 +5,8 @@ import { createClient, processLock } from '@supabase/supabase-js';
 
 // TODO: Replace with your actual Supabase URL and anon key
 // You can find these in your Supabase project settings > API
-const supabaseUrl = 'https://qnsgmehxolsbjsuwackh.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuc2dtZWh4b2xzYmpzdXdhY2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTYyNDgsImV4cCI6MjA2OTg5MjI0OH0.tEutBNXaIuuP0F1QS4hIjHIO04eD9OKxaRWrg1M0Rvs';
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
