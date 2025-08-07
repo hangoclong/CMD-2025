@@ -200,6 +200,7 @@ export default function NotesScreen() {
     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   }
 
+  // MODIFY: <TouchableOpacity style={styles.deleteButton} onPress={() => confirmDelete(item.id)}>
   return (
     <View style={styles.container}>
       <FlatList
