@@ -1,7 +1,3 @@
-Of course. Here is a revised proposal with a simplified, 3-category rubric that totals 100 points.
-
------
-
 ### **Final Team Project & Assessment: "Eventide Market"**
 
 Welcome to your capstone project. For the final two weeks of this course, your team will build a complete, full-stack application. This project serves as your final assessment and is designed to be a cornerstone of your professional portfolio.

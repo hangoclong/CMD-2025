@@ -96,7 +96,7 @@ export default function NotesScreen() {
             </View>
             <TouchableOpacity 
               style={styles.deleteButton}
-              onPress={() => deleteNote(item.id)}
+              onPress={() => confirmDelete(item.id)}
             >
               <Ionicons name="trash-outline" size={24} color="#ef4444" />
             </TouchableOpacity>

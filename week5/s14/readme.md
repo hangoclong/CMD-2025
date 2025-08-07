@@ -97,6 +97,15 @@ WITH CHECK (auth.uid() = user_id);
 
 > **Heads Up!** If you had tried to run the app code *before* adding this `INSERT` policy, you would have seen an error: `new row violates row-level security policy`. This is Supabase protecting your data as expected!
 
+```sql
+-- Create a policy for deleting notes
+CREATE POLICY "Users can delete their own notes" 
+ON public.notes
+FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+```
+
 ### Step 3: Updating the Notes Screen for Database Operations
 
 Now, we will modify `app/(tabs)/notes.tsx` to perform all note operations (Create, Read, Delete) directly with our Supabase database. The following is the complete, updated code for the file. Replace the content of your existing file with this, and review the comments to understand the changes.
