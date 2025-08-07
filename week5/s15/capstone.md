@@ -8,6 +8,8 @@ Welcome to your capstone project. For the final two weeks of this course, your t
 
 Your team's grade will be based on a 100-point scale, detailed in the simplified rubric below.
 
+![Reference App](image.png){width=400}
+
 #### **Use Case Diagram**
 This diagram illustrates the main actors and the actions they can perform within the "Eventide Market" system. It provides a high-level overview of the app's functionality from a user's perspective. The Artisan is a specialized type of Browser who inherits all Browse capabilities and gains additional ones upon authentication.
 
