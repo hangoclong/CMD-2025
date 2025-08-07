@@ -5,8 +5,8 @@ import { createClient, processLock } from '@supabase/supabase-js';
 
 // TODO: Replace with your actual Supabase URL and anon key
 // You can find these in your Supabase project settings > API
-const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = 'https://qnsgmehxolsbjsuwackh.supabase.co';
+const supabaseAnonKey = 'sb_publishable_8VvX7W8uInljViUxNhfyGQ_1AfHiMSz';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

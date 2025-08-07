@@ -1,63 +1,87 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react'; // MODIFICATION: Added useEffect
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Alert, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+// MODIFICATION: Update the Note type to match the database, including created_at
 type Note = {
   id: string;
   title: string;
   content: string;
+  created_at: string;
 };
 
-const INITIAL_NOTES: Note[] = [
-  { id: 'n1', title: 'Session 13 Prep', content: 'Review Supabase auth flow.' },
-  { id: 'n2', title: 'Grocery List', content: 'Milk, Eggs, Bread' },
-  { id: 'n3', title: 'Meeting Notes', content: 'Discuss Q3 roadmap and deliverables.' },
-];
-
 export default function NotesScreen() {
-  const [notes, setNotes] = useState(INITIAL_NOTES);
+  const { session } = useAuth(); // NEW: Get user session
+  const [notes, setNotes] = useState<Note[]>([]); // MODIFICATION: Initialize with empty array
   const [modalVisible, setModalVisible] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteContent, setNewNoteContent] = useState('');
+  const [loading, setLoading] = useState(false); // NEW: Add a loading state
 
-  // Function to add a new note
-  const addNote = () => {
-    if (newNoteTitle.trim() === '' || newNoteContent.trim() === '') {
-      Alert.alert('Error', 'Please enter both title and content');
+  // NEW: Function to fetch notes from the database
+  const fetchNotes = async () => {
+    if (!session) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('notes')
+      .select('id, title, content, created_at') // Select all needed columns
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (data) setNotes(data);
+    if (error) console.error('Error fetching notes:', error);
+    setLoading(false);
+  };
+
+  // NEW: Use useEffect to fetch notes when the component loads or session changes
+  useEffect(() => {
+    fetchNotes();
+  }, [session]);
+
+  // MODIFICATION: Make addNote async and insert into Supabase
+  const addNote = async () => {
+    if (newNoteTitle.trim() === '' || !session?.user) {
+      Alert.alert('Error', 'Please enter a title');
       return;
     }
+    const { error } = await supabase
+      .from('notes')
+      .insert({ title: newNoteTitle, content: newNoteContent, user_id: session.user.id });
 
-    const newNote = {
-      id: `n${Date.now()}`, // Simple unique ID generation
-      title: newNoteTitle,
-      content: newNoteContent,
-    };
-
-    setNotes([...notes, newNote]);
-    setNewNoteTitle('');
-    setNewNoteContent('');
-    setModalVisible(false);
+    if (error) {
+      Alert.alert('Error saving note', error.message);
+    } else {
+      setNewNoteTitle('');
+      setNewNoteContent('');
+      setModalVisible(false);
+      fetchNotes(); // Re-fetch to show the new note
+    }
   };
 
-  // Function to delete a note
-  const deleteNote = (id: string) => {
-    Alert.alert(
-      'Delete Note',
-      'Are you sure you want to delete this note?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          onPress: () => {
-            const updatedNotes = notes.filter(note => note.id !== id);
-            setNotes(updatedNotes);
-            console.log('Note deleted:', id, 'Remaining notes:', updatedNotes.length);
-          },
-          style: 'destructive'
-        },
-      ]
-    );
+  // MODIFICATION: The delete logic is now async and separate from the confirmation alert
+  const deleteNote = async (id: string) => {
+    const { error } = await supabase.from('notes').delete().eq('id', id);
+    if (error) {
+      Alert.alert('Error deleting note', error.message);
+    } else {
+      // Optimistic update: remove from UI immediately. fetchNotes() provides consistency.
+      setNotes(notes.filter(note => note.id !== id));
+    }
   };
+
+  const confirmDelete = (id: string) => {
+    Alert.alert('Delete Note', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', onPress: () => deleteNote(id), style: 'destructive' },
+    ]);
+  };
+
+  // NEW: Show a loading indicator while fetching data
+  if (loading) {
+    return <ActivityIndicator style={{ flex: 1 }} size="large" />;
+  }
 
   return (
     <View style={styles.container}>
@@ -234,5 +258,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  noteDate: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 5,
   },
 });
